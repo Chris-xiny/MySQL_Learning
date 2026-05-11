@@ -183,12 +183,128 @@ select * from emp,dept where emp.dept_id=dept.id; #消除无用笛卡尔积
 -- 2. 场景二：查询所有员工及其领导的名字
     select e1.name '员工',e2.name '领导' from emp e1 left join emp e2 on e1.managerid=e2.id;
 
+/*
+   联合查询 - UNION / UNION ALL 笔记
+   定义：
+      联合查询（UNION），是把多次查询的结果合并起来，形成一个新的查询结果集。
+   语法：
+      SELECT 字段列表 FROM 表A ...
+      UNION [ALL]
+      SELECT 字段列表 FROM 表B ...;
+   说明：
+      - UNION：合并结果集，并自动去除重复记录
+      - UNION ALL：合并结果集，不去除重复记录，性能通常更高
+      - 注意：前后两个查询的字段列数、数据类型必须一致
+*/
+-- 联合查询演示
+-- 1. 场景：将薪资低于 5000 的员工，和年龄大于 50 岁的员工全部查询出来
+    -- 使用 UNION ALL：合并两个结果集，不去重（包含重复记录）
+    select * from emp where salary<5000
+    union all
+    select * from emp where age>50;
+    -- 使用 UNION：合并两个结果集，自动去除重复记录
+    select * from emp where salary<5000
+    union
+    select * from emp where age>50;
 
+/*
+   子查询 笔记
+   概念：
+      SQL语句中嵌套SELECT语句，称为嵌套查询，又称子查询。
+   示例语法：
+      SELECT * FROM t1 WHERE column1 = (SELECT column1 FROM t2);
+   说明：
+      子查询外部的语句可以是 INSERT / UPDATE / DELETE / SELECT 中的任意一种。
+   分类（按子查询结果）：
+      1. 标量子查询：子查询结果为单个值
+      2. 列子查询：子查询结果为一列
+      3. 行子查询：子查询结果为一行
+      4. 表子查询：子查询结果为多行多列
+*/
 
+-- 标量子查询示例
+-- 1. 场景一：查询"销售部"的所有员工信息
+    select * from emp where dept_id=(select id from dept where name='销售部');
+-- 2. 场景二：查询在"方东白"入职之后的员工信息
+    select * from emp where entrydate>(select emp.entrydate from emp where name ='方东白');
+/*
+   子查询 - 列子查询 笔记
+   概念：
+      子查询返回的结果是一列（可以是多行），这种子查询称为列子查询。
+   常用操作符：
+      IN       - 在指定的集合范围之内，多选一
+      NOT IN   - 不在指定的集合范围之内
+      ANY      - 子查询返回列表中，有任意一个满足即可
+      SOME     - 与 ANY 等同，使用 SOME 的地方都可以使用 ANY
+      ALL      - 子查询返回列表的所有值都必须满足
+*/
+-- 列子查询
+-- 1. 查询 "销售部" 和 "市场部" 的所有员工信息
+    select * from emp where dept_id in(select id from dept where name in ('市场部','销售部') );
+-- 2. 查询比财务部所有人工资都高的员工信息
+    select * from emp where salary>all(select salary from emp where dept_id=(select id from dept where name='财务部'));
+-- 3. 查询比研发部其中任意一个人工资高的员工信息
+    select * from emp where salary>any(select salary from emp where dept_id=(select id from dept where name='研发部'));
 
+/*
+   子查询 - 行子查询 笔记
+   概念：
+      子查询返回的结果是一行（可以是多列），这种子查询称为行子查询。
+   常用操作符：
+      = 、 <> 、 IN 、 NOT IN
+*/
+-- 行子查询
+-- 1. 查询与 "张无忌" 的薪资及直属领导相同的员工信息 ;
+    select * from emp where (salary,managerid)=(select salary,managerid from emp where name = '张无忌');
 
+/*
+   子查询 - 表子查询 笔记
+   概念：
+      子查询返回的结果是多行多列，这种子查询称为表子查询。
+   常用操作符：
+      IN
+*/
+-- 表子查询
+-- 1. 查询与 "鹿杖客" , "宋远桥" 的职位和薪资相同的员工信息
+    select * from emp where (job,salary) in(select job,salary from emp where name in('鹿杖客','宋远桥'));
+-- 2. 查询入职日期是 "2006-01-01" 之后的员工信息 , 及其部门信息
+    select e.*,dept.name from (select * from emp where entrydate>'2006-01-01') e left join dept on e.dept_id=dept.id;
 
+-- SQL 练习题目：根据需求完成SQL语句的编写
+-- -------------------------------> 多表查询案例 <-------------------------------
+create table salgrade(
+                         grade int,
+                         losal int,
+                         hisal int
+) comment '薪资等级表';
 
+insert into salgrade values (1, 0, 3000);
+insert into salgrade values (2, 3001, 5000);
+insert into salgrade values (3, 5001, 8000);
+insert into salgrade values (4, 8001, 10000);
+insert into salgrade values (5, 10001, 15000);
+insert into salgrade values (6, 15001, 20000);
+insert into salgrade values (7, 20001, 25000);
+insert into salgrade values (8, 25001, 30000);
+-- 1. 查询员工的姓名、年龄、职位、部门信息。
+    select e.name,age,job,d.name from emp e left join dept d on e.dept_id=d.id;
+-- 2. 查询年龄小于30岁的员工姓名、年龄、职位、部门信息。
+    select e.name,age,job,d.name from emp e left join dept d on e.dept_id=d.id where e.age<30;
+-- 3. 查询拥有员工的部门ID、部门名称。
+    select id,name from dept where dept.id in(select distinct dept_id emp from emp where dept_id is not null) ;
+    select distinct d.id,d.name from emp e,dept d where e.dept_id=d.id;
+-- 4. 查询所有年龄大于40岁的员工, 及其归属的部门名称; 如果员工没有分配部门, 也需要展示出来。
+    select e.name,d.name from emp e left join dept d on e.dept_id=d.id where age>40;
+-- 5. 查询所有员工的工资等级。
+    select name,grade from emp,salgrade where salary between losal and hisal;
+-- 6. 查询 "研发部" 所有员工的信息及工资等级。
+    select e.name,grade from (select emp.*from emp join dept on emp.dept_id = dept.id where dept.name='研发部' ) e,salgrade where salary between losal and hisal;
+-- 7. 查询 "研发部" 员工的平均工资。
+-- 8. 查询工资比 "灭绝" 高的员工信息。
+-- 9. 查询比平均薪资高的员工信息。
+-- 10. 查询低于本部门平均工资的员工信息。
+-- 11. 查询所有的部门信息, 并统计部门的员工人数。
+-- 12. 查询所有学生的选课情况, 展示出学生名称, 学号, 课程名称。
 
 
 
