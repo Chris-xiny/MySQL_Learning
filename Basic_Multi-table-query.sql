@@ -300,11 +300,19 @@ insert into salgrade values (8, 25001, 30000);
 -- 6. 查询 "研发部" 所有员工的信息及工资等级。
     select e.name,grade from (select emp.*from emp join dept on emp.dept_id = dept.id where dept.name='研发部' ) e,salgrade where salary between losal and hisal;
 -- 7. 查询 "研发部" 员工的平均工资。
+    select avg(emp.salary) from emp,dept where emp.dept_id=dept.id and dept.name='研发部';
 -- 8. 查询工资比 "灭绝" 高的员工信息。
+    select * from emp where salary>(select salary from emp where name='灭绝');
 -- 9. 查询比平均薪资高的员工信息。
+    select * from emp where salary>(select avg(salary) from emp);
 -- 10. 查询低于本部门平均工资的员工信息。
+    select e1.*from emp e1 join (select dept_id,avg(salary) a from emp group by dept_id) e2 on e1.dept_id=e2.dept_id where salary<a;
+    select * from emp e1 where e1.salary<(select avg(e2.salary) from emp e2 where e1.dept_id=e2.dept_id);
 -- 11. 查询所有的部门信息, 并统计部门的员工人数。
+    select d.*, ( select count(*) from emp e where dept_id=d.id) from dept d ;
 -- 12. 查询所有学生的选课情况, 展示出学生名称, 学号, 课程名称。
+    select s.name,s.no ,(select c.name from course c where c.id=courseid)from student_course sc right join student s on sc.studentid = s.id;
+
 
 
 
