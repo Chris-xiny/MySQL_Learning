@@ -98,12 +98,54 @@ create index idx_user_email on tb_user(email);
 
 drop index idx_user_email on tb_user;
 
+/*
+-- SQL性能分析 - SQL执行频率
+    MySQL客户端连接成功后，通过 show [session|global] status 命令可以提供服务器状态信息。
+    通过如下指令，可以查看当前数据库的INSERT、UPDATE、DELETE、SELECT的访问频次：
+*/
+SHOW GLOBAL STATUS LIKE 'Com_______';
 
+-- SQL性能分析
+/*
+ - 慢查询日志
+    慢查询日志记录了所有执行时间超过指定参数（long_query_time，单位：秒，默认10秒）的所有SQL语句的日志。
+    MySQL的慢查询日志默认没有开启，需要在MySQL的配置文件（/etc/my.cnf）中配置如下信息：
+    查询慢查询日志开关:
+        show variables like 'slow_query_log';
+    配置示例：
+        1.开启MySQL慢日志查询开关
+        slow_query_log=1
+        2。设置慢日志的时间为2秒，SQL语句执行时间超过2秒，就会视为慢查询，记录慢查询日志
+        long_query_time=2
+    查看慢查询日志:
+        文件名为localhost-slow.log
 
+ - profile详情
+    show profiles 能够在做SQL优化时帮助我们了解时间都耗费到哪里去了。
+    通过have_profiling参数，能够看到当前MySQL是否支持profile操作：
+        SELECT @@have_profiling;
+    默认profiling是关闭的，可以通过set语句在session/global级别开启profiling：
+        SET profiling = 1;
+ */
+select @@have_profiling;
+select @@profiling;
+set profiling=1;
+-- SQL性能分析 - profile详情（查看SQL执行耗时）
+-- ==============================================================
+/*
+执行一系列的业务SQL的操作，然后通过如下指令查看指令的执行耗时：
+*/
 
+-- 查看每一条SQL的耗时基本情况
+insert into tb_user (name, phone, profession, age, status, email) values('张三',13354896471,'教师',18,'工作','123456@qq.com');
+select * from tb_user where id='1';
+select * from tb_user where name='张三';
+show profiles ;
 
-
-
+-- 查看指定query_id的SQL语句各个阶段的耗时情况
+#show profile for query query_id;
+-- 查看指定query_id的SQL语句CPU的使用情况
+#show profile cpu for query query_id;
 
 
 
